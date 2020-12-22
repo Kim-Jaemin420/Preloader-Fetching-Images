@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Preloader - fetching images</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Open Sans';
+      font-weight: 300;
+    }
+
+    .title {
+      color: #db5b33;
+      font-weight: 300;
+      text-align: center;
+    }
+
+    .images-container {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-column-gap: 10px;
+      width: 980px;
+      margin: 0 auto;
+    }
+
+    .images-container img {
+      /* TODO:
+          원본 이미지의 가로세로비를 무시하고 고정적으로 가로세로비를 지정하고 있다.
+          원본 이미지의 가로세로비(ratio)를 유지하도록 heigth를 지정하고 싶다.
+          뷰포트 크기에 따라 width도 변하는 것에 주의하자.
+        */
+      width: 100%;
+      height: 250px;
+      /* max-height: 400px; */
+      /*
+        - object-fit (https://developer.mozilla.org/ko/docs/Web/CSS/object-fit)
+        : img, video 요소와 같은 대체 요소의 콘텐츠 크기를 어떤 방식으로 조절해 컨테이너 요소에 맞출 것인지 지정한다.
+          프로퍼티 값: fill(기본값), contain, cover, none, scale-down
+          IE에서는 지원하지 않는다.
+        - object-fit: cover
+        : 대체 콘텐츠의 가로세로비를 유지하면서 컨테이너 요소를 가득 채운다. 대체 콘텐츠와 컨테이너 요소의 가로세로비가 일치하지 않으면 콘텐츠의 일부가 잘린다.
+          background-size: cover;와 유사하다.
+        */
+      object-fit: cover;
+      margin-bottom: 10px;
+      box-shadow: 0 5px 8px rgba(0, 0, 0, 0.4);
+      border-radius: 5px;
+    }
+
+    /* Preloader */
+    .loader {
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      background-color: rgba(255, 255, 255, 0.6);
+      display: none;
+    }
+
+    .loader img {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 50px;
+    }
+
+    .loader.show {
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <h1 class="title">Preloader - fetching images</h1>
+  <div class="loader">
+    <!-- http://samherbert.net/svg-loaders -->
+    <img src="img/ball-triangle.svg" alt="Loading..." />
+  </div>
+  <div class="images-container"></div>
+
+  <script>
+    // const wait = ms => new Promise((resolve, reject) => {
+    //   setTimeout(() => resolve(), ms);
+    // });
+    // return async () => {
+    //   await wait(2000);
+
+    //   return (await fetch('https://picsum.photos/v2/list')).json();
+    // };
+    const fetchImages = (() => async () => (await fetch('https://picsum.photos/v2/list')).json())();
+
+    const renderImages = (() => {
+      const $imagesContainer = document.querySelector('.images-container');
+
+      return images => {
+        $imagesContainer.innerHTML = images.map(image => `<img src="${image.download_url}" />`).join('');
+      };
+    })();
+
+    const loader = (() => {
+      const $loader = document.querySelector('.loader');
+
+      return {
+        show() {
+          $loader.classList.add('show');
+        },
+        hide() {
+          $loader.classList.remove('show');
+        }
+      };
+    })();
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // show loader
+      loader.show();
+      const images = await fetchImages();
+      renderImages(images);
+
+      // hide loader
+      loader.hide();
+    });
+  </script>
+</body>
+
+</html>
